@@ -1,0 +1,21 @@
+.selected-race {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+  padding: 11px 14px;
+  border: 1px solid rgba(8, 37, 27, 0.18);
+  border-radius: 14px;
+  background: rgba(8, 37, 27, 0.12);
+}
+
+.selected-race span {
+  color: #284b3c;
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.selected-race strong {
+  color: #062d24;
+  font-size: 1.12rem;
+}

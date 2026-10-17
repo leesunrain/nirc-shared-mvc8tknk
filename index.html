@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#071826">
+  <title>러닝 환경 페이스 보정</title>
+  <meta name="description" content="거리·기온·습도·햇빛·더위 적응을 반영해 러닝 페이스 보정 범위를 제시합니다.">
+  <link rel="stylesheet" href="./style.css">
+  <link rel="stylesheet" href="./distance-highlight.css">
+  <link rel="stylesheet" href="./location.css">
+</head>
+<body>
+  <main class="shell">
+    <header>
+      <div class="eyebrow">RACE DAY · 보수적 설정</div>
+      <h1>러닝 환경<br><span>페이스 보정</span></h1>
+      <p>현재 위치의 날씨를 먼저 불러오며, 다른 지역 검색이나 직접 입력도 가능합니다.</p>
+    </header>
+
+    <section class="panel input-panel" aria-labelledby="input-title">
+      <div class="section-head"><h2 id="input-title">오늘의 조건</h2><button id="reset" class="text-btn">초기화</button></div>
+      <div class="location-box">
+        <button id="locate" class="locate-btn"><span>⌖</span><b>현재 위치 날씨 불러오기</b></button>
+        <div id="locationState" class="location-state">현재 위치를 우선 확인합니다</div>
+        <div class="place-search"><input id="place" autocomplete="off" placeholder="다른 지역 검색 (예: 나주, 서울)"><button id="searchPlace">검색</button></div>
+        <div id="placeResults" class="place-results" hidden></div>
+      </div>
+      <div class="grid two">
+        <label class="full-row">기준 페이스 <span>분:초 /km</span><input id="pace" inputmode="numeric" value="4:30" aria-label="기준 페이스"></label>
+        <label>기온 <span>°C</span><input id="temp" type="number" inputmode="decimal" min="-10" max="50" step="0.1" value="25"></label>
+        <label>습도 <span>%</span><input id="rh" type="number" inputmode="decimal" min="5" max="100" step="1" value="70"></label>
+      </div>
+      <fieldset>
+        <legend>경기 거리</legend>
+        <div class="segmented distance-options">
+          <label><input type="radio" name="distance" value="5"><span>5km</span></label>
+          <label><input type="radio" name="distance" value="10" checked><span>10km</span></label>
+          <label><input type="radio" name="distance" value="21.0975"><span>하프</span></label>
+          <label><input type="radio" name="distance" value="42.195"><span>풀</span></label>
+        </div>
+      </fieldset>
+      <fieldset>
+        <legend>햇빛 조건</legend>
+        <div class="segmented">
+          <label><input type="radio" name="sun" value="0" checked><span>그늘·흐림</span></label>
+          <label><input type="radio" name="sun" value="2.5"><span>직사광선</span></label>
+        </div>
+      </fieldset>
+      <fieldset>
+        <legend>더위 적응 수준</legend>
+        <div class="segmented acclimation-options">
+          <label><input type="radio" name="acclimation" value="1.15"><span>미적응</span></label>
+          <label><input type="radio" name="acclimation" value="1" checked><span>보통</span></label>
+          <label><input type="radio" name="acclimation" value="0.9"><span>충분</span></label>
+        </div>
+      </fieldset>
+    </section>
+
+    <section class="result" aria-live="polite">
+      <div class="selected-race"><span>현재 계산 거리</span><strong id="selectedDistance">10km</strong></div>
+      <div class="status-row"><span id="statusDot"></span><span id="status">주의</span><small id="confidence">권장 범위</small></div>
+      <div class="hero-number"><strong id="addKm">+12</strong><span>초 /km</span></div>
+      <div class="range" id="rangeKm">권장 범위 +10~14초/km</div>
+      <div class="result-grid">
+        <article><span>원래 목표 페이스</span><strong id="originalPace">4:30/km</strong></article>
+        <article><span>보정 페이스</span><strong id="adjusted">4:42/km</strong></article>
+        <article><span>400 m 보정</span><strong id="add400">+5초</strong></article>
+        <article><span>400 m 목표</span><strong id="lap400">1:53</strong></article>
+        <article><span>예상 손실률</span><strong id="loss">4.4%</strong></article>
+        <article><span>보정 최종 기록</span><strong id="finalTime">43:20</strong></article>
+      </div>
+    </section>
+
+    <section class="panel comparison" aria-labelledby="comparison-title">
+      <div class="section-head"><h2 id="comparison-title">거리별 보정 비교</h2><small>같은 날씨·페이스 기준</small></div>
+      <div id="distanceCompare" class="compare-grid"></div>
+    </section>
+
+    <section class="condition-card" aria-live="polite" aria-labelledby="condition-title">
+      <div class="condition-place">
+        <span id="condition-title">현재 위치</span>
+        <strong id="currentPlace">위치를 확인하는 중…</strong>
+        <small id="observedAt">날씨 정보를 불러오고 있습니다</small>
+      </div>
+      <div class="condition-grid">
+        <div><span>기온</span><strong id="tempSummary">--°C</strong></div>
+        <div><span>습도</span><strong id="rhSummary">--%</strong></div>
+        <div><span>이슬점</span><strong id="dewSummary">--°C</strong></div>
+      </div>
+    </section>
+
+    <section class="weather-strip" aria-label="환경 지표">
+      <div><span>이슬점</span><strong id="dew">19.1°C</strong></div>
+      <div><span>습구온도</span><strong id="wet">21.1°C</strong></div>
+      <div><span>추정 WBGT</span><strong id="wbgt">22.3°C</strong></div>
+    </section>
+
+    <details class="panel explainer">
+      <summary>계산 기준과 안전 안내</summary>
+      <div class="detail-body">
+        <h3>무엇을 계산하나요?</h3>
+        <p>습구온도는 Stull(2011) 근사식, 이슬점은 Magnus 근사식으로 계산합니다. 추정 WBGT는 그늘에서 <code>0.7×습구온도 + 0.3×기온</code>으로 산출합니다. 직사광선 선택 시 일사량·풍속 자료가 없는 한계를 표시하면서 추정 WBGT에 2.5°C를 더합니다.</p>
+        <h3>페이스 보정식</h3>
+        <p>Ely, Vihma, El Helou 등의 대규모 마라톤 분석에서 확인된 고온 시 기록 저하와 비선형 경향을 토대로 열부하를 계산합니다. 여기에 경기시간 차이를 반영한 거리계수(5km 0.30, 10km 0.44, 하프 0.72, 풀 1.00), 기준 페이스의 작은 보정, 더위 적응계수를 적용합니다. <b>거리·페이스·적응 계수는 논문이 개인별 공식으로 직접 제시한 값이 아니라 앱용 보수적 추정 모델</b>입니다.</p>
+        <h3>권장 범위</h3>
+        <p>중심값 주변의 불확실성을 거리와 열부하에 따라 약 ±20~30%로 표시합니다. 실제 일사량·바람·복장·급수·개인 발한량을 알 수 없으므로 단일값보다 범위를 우선해 판단하십시오.</p>
+        <h3>꼭 확인하세요</h3>
+        <p>실제 WBGT는 흑구온도, 일사량, 풍속이 필요합니다. 더위 적응, 체격, 복장, 급수, 코스에 따라 차이가 큽니다. WBGT 20°C 이상이면 기록보다 안전을 우선하고, 어지럼·오한·혼란·운동조절 장애가 있으면 즉시 중단하십시오.</p>
+      </div>
+    </details>
+
+    <section class="sources">
+      <h2>근거 자료</h2>
+      <a href="https://pubmed.ncbi.nlm.nih.gov/17473775/" target="_blank" rel="noopener"><b>Ely et al., 2007</b><span>WBGT 5→25°C에서 마라톤 기록이 점진적으로 저하</span></a>
+      <a href="https://pubmed.ncbi.nlm.nih.gov/19937453/" target="_blank" rel="noopener"><b>Vihma, 2010</b><span>기온·습도와 마라톤 기록 및 미완주율의 관계</span></a>
+      <a href="https://doi.org/10.1371/journal.pone.0037407" target="_blank" rel="noopener"><b>El Helou et al., 2012</b><span>대규모 마라톤 기록에서 기온이 가장 큰 환경 변수임을 확인</span></a>
+      <a href="https://doi.org/10.3389/fpsyg.2020.01438" target="_blank" rel="noopener"><b>Gasparetto &amp; Nesseler, 2020</b><span>WBGT 효과의 비선형성과 주자군별 차이</span></a>
+      <a href="https://doi.org/10.1175/JAMC-D-11-0143.1" target="_blank" rel="noopener"><b>Stull, 2011</b><span>기온·상대습도로 습구온도를 추정하는 근사식</span></a>
+    </section>
+  </main>
+  <div class="version">모델 v2.1 · 거리 표시 강화</div>
+  <script src="./app.js"></script>
+</body>
+</html>
